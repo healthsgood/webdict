@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyForge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            position: relative; /* 确保导出按钮定位 */
+        }
+        .container {
+            display: none; /* 初始隐藏容器 */
+            width: 100%;
+            max-width: 1200px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        /* 启动页样式 */
+        .start-page {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .start-page h1 {
+            font-size: 36px;
+            color: #0078d4;
+            margin-bottom: 20px;
+        }
+        .start-page p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .start-page pre {
+            background-color: #f3f3f3;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #333;
+            max-width: 500px;
+            margin: 0 auto 20px;
+            overflow-x: auto;
+        }
+        /* “+”按钮样式 */
+        #initial-add-button {
+            font-size: 40px;
+            color: #fff;
+            cursor: pointer;
+            background-color: #0078d4;
+            border: none;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            margin-top: 20px; /* 按钮与格式说明的间距 */
+        }
+        #initial-add-button:hover {
+            background-color: #005bb5;
+            transform: scale(1.1); /* 悬停时放大效果 */
+        }
+        /* 左侧导航栏 */
+        .sidebar {
+            width: 250px;
+            background-color: #f3f3f3;
+            padding: 20px;
+            border-right: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* 固定高度 */
+            overflow-y: hidden; /* 隐藏默认滚动条 */
+        }
+        .sidebar-header {
+            margin-bottom: 10px;
+        }
+        .sidebar-header input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 10px;
+            overflow-y: auto; /* 单独滚动条 */
+            flex-grow: 1; /* 占据剩余空间 */
+        }
+        .sidebar li {
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .sidebar li:hover {
+            background-color: #e0e0e0;
+        }
+        .sidebar li.active {
+            background-color: #0078d4;
+            color: #fff;
+        }
+        /* 主内容区域 */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        h1 {
+            text-align: center;
+            color: #0078d4;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #0078d4;
+        }
+        input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            padding: 10px;
+            background-color: #0078d4;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #005bb5;
+        }
+        /* 添加单词功能样式 */
+        .add-word-container {
+            display: flex;
+            gap: 10px;
+        }
+        .add-word-container input[type="text"] {
+            flex: 1;
+        }
+        .add-word-container input#word-input {
+            flex: 0 0 150px; /* 固定宽度 */
+        }
+        .add-word-container input#definition-input {
+            flex: 1; /* 占据剩余宽度 */
+        }
+        /* 文件上传按钮 */
+        .custom-file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .custom-file-upload input[type="file"] {
+            position: absolute;
+            top: 0;
+            right: 0;
+            opacity: 0;
+            cursor: pointer;
+            height: 100%;
+            width: 100%;
+        }
+        /* 详细释义区域 */
+        .word-detail {
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            min-height: 200px;
+        }
+        .word-detail h3 {
+            margin-bottom: 10px;
+        }
+        .word-detail p {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        /* 导出按钮样式 */
+        #export-button {
+            background-color: #0078d4;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+        #export-button:hover {
+            background-color: #005bb5;
+        }
+        /* 工具提示 */
+        #export-button::after {
+            content: "导出词典";
+            position: absolute;
+            top: -30px;
+            right: 50%;
+            transform: translateX(50%);
+            background-color: #333;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        #export-button:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+        /* Tab 区域样式 */
+        .tab-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .tab-item {
+            padding: 10px 20px;
+            background-color: #0078d4;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            height: 40px;
+            line-height: 20px;
+        }
+        .tab-item.active {
+            background-color: #005bb5;
+        }
+        .tab-item button {
+            background-color: transparent;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .tab-item button:hover {
+            color: #ff4d4d;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .add-tab-button {
+            padding: 10px;
+            background-color: #0078d4;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .add-tab-button:hover {
+            background-color: #005bb5;
+        }
+        /* 提示消息样式 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4caf50;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .notification.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        /* 详细释义样式优化 */
+        .phonetic {
+            font-style: italic;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .part-of-speech {
+            font-weight: bold;
+            color: #0078d4;
+            margin-bottom: 5px;
+        }
+        .definition {
+            margin-bottom: 10px;
+        }
+        .chinese-definition {
+            color: #555;
+            font-size: 13px;
+            margin-left: 10px;
+        }
+        .example {
+            color: #333;
+            font-size: 13px;
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 提示消息 -->
+    <div id="notification" class="notification"></div>
+
+    <!-- 启动页 -->
+    <div id="start-page" class="start-page">
+        <h1>SkyForge</h1>
+        <p>请上传 JSON 格式的词典文件以开始使用。</p>
+        <pre>
+[
+    { "word": "example", "definition": "A representative form or pattern." },
+    { "word": "dictionary", "definition": "A reference book containing words and their meanings." }
+]
+        </pre>
+        <div id="initial-add-button" onclick="document.getElementById('file-input').click()">+</div>
+    </div>
+
+    <input type="file" id="file-input" accept=".json" style="display: none;" onchange="addDictionaryFromFile()">
+
+    <div class="container" id="main-container">
+        <!-- 左侧导航栏 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <input type="text" id="nav-search-input" placeholder="搜索单词..." oninput="filterWordList()">
+            </div>
+            <ul id="word-list-nav"></ul>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <!-- Tab 区域 -->
+            <div class="tab-container" id="tab-container">
+                <div class="button-group">
+                    <button id="export-button" onclick="exportDictionary()" style="display: none;">></button>
+                    <button class="add-tab-button" onclick="document.getElementById('file-input').click()">+</button>
+                </div>
+            </div>
+
+            <!-- 添加单词功能 -->
+            <div class="section">
+                <div class="section-title">添加单词</div>
+                <div class="add-word-container">
+                    <input type="text" id="word-input" placeholder="输入单词" required>
+                    <input type="text" id="definition-input" placeholder="输入定义" required>
+                    <button onclick="addWord()">添加</button>
+                </div>
+            </div>
+
+            <!-- 单词详细释义 -->
+            <div class="section">
+                <div class="section-title">单词详细释义</div>
+                <div id="word-detail" class="word-detail">
+                    <h3>请选择一个单词</h3>
+                    <p>这里会显示单词的详细释义。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dictionaries = new Map(); // 使用 Map 存储多个词典
+        let currentDictName = null; // 当前选中的词典名称
+        let currentWordIndex = null;
+
+        // 页面加载时恢复词典数据
+        function loadDictionariesFromStorage() {
+            const savedData = localStorage.getItem('skyforge-dictionaries');
+            if (savedData) {
+                const parsedData = JSON.parse(savedData);
+                for (const [dictName, wordMap] of Object.entries(parsedData)) {
+                    dictionaries.set(dictName, new Map(Object.entries(wordMap)));
+                    addTab(dictName, false);
+                }
+
+                // 如果有词典，显示主界面并切换到第一个词典
+                if (dictionaries.size > 0) {
+                    showMainInterface();
+                    const firstDictName = Array.from(dictionaries.keys())[0];
+                    switchDictionary(firstDictName);
+                }
+            }
+        }
+
+        // 保存词典数据到 localStorage
+        function saveDictionariesToStorage() {
+            const serializedData = {};
+            dictionaries.forEach((wordMap, dictName) => {
+                serializedData[dictName] = Object.fromEntries(wordMap);
+            });
+            localStorage.setItem('skyforge-dictionaries', JSON.stringify(serializedData));
+        }
+
+        // 显示提示消息
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000); // 3秒后自动消失
+        }
+
+        // 从文件添加词典
+        function addDictionaryFromFile() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+
+            if (!file) return;
+
+            if (!file.name.endsWith('.json')) {
+                showNotification('仅支持 JSON 格式的词典文件');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const uploadedData = JSON.parse(event.target.result);
+
+                    // 验证是否符合词典格式
+                    if (Array.isArray(uploadedData) && uploadedData.every(item => 
+                        typeof item.word === 'string' && typeof item.definition === 'string'
+                    )) {
+                        const dictName = prompt("请输入词典名称：");
+                        if (!dictName) return;
+
+                        if (dictionaries.has(dictName)) {
+                            showNotification('词典名称已存在，请使用其他名称！');
+                            return;
+                        }
+
+                        const wordMap = new Map();
+                        uploadedData.forEach(item => wordMap.set(item.word, item.definition));
+                        dictionaries.set(dictName, wordMap);
+                        showMainInterface();
+                        addTab(dictName, true);
+                        switchDictionary(dictName);
+                        saveDictionariesToStorage(); // 保存到 localStorage
+                        showNotification('词库加载成功！');
+                    } else {
+                        showNotification('文件格式不正确，请确保文件是有效的 JSON 格式');
+                    }
+                } catch (error) {
+                    showNotification('文件解析失败，请确保文件是有效的 JSON 格式');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // 显示主界面
+        function showMainInterface() {
+            const startPage = document.getElementById('start-page');
+            const mainContainer = document.getElementById('main-container');
+            const exportButton = document.getElementById('export-button');
+
+            startPage.style.display = 'none'; // 隐藏启动页
+            mainContainer.style.display = 'flex'; // 显示主容器
+            exportButton.style.display = 'block'; // 显示导出按钮
+        }
+
+        // 添加 Tab
+        function addTab(dictName, isActive) {
+            const tabContainer = document.getElementById('tab-container');
+            const tabItem = document.createElement('div');
+            tabItem.className = `tab-item ${isActive ? 'active' : ''}`;
+            tabItem.innerHTML = `
+                <span>${dictName}</span>
+                <button onclick="deleteDictionary(event, '${dictName}')">×</button>
+            `;
+            tabItem.onclick = () => switchDictionary(dictName);
+            tabContainer.appendChild(tabItem);
+        }
+
+        // 切换词典
+        function switchDictionary(dictName) {
+            currentDictName = dictName;
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.classList.toggle('active', tab.textContent.trim().startsWith(dictName));
+            });
+            renderWordListNav();
+        }
+
+        // 删除词典
+        function deleteDictionary(event, dictName) {
+            event.stopPropagation(); // 阻止事件冒泡到父元素
+            if (!confirm(`确定要删除词典 "${dictName}" 吗？`)) return;
+
+            dictionaries.delete(dictName); // 使用 Map 的 delete 方法
+            const tabContainer = document.getElementById('tab-container');
+            const tabToRemove = Array.from(tabContainer.children).find(tab =>
+                tab.textContent.trim().startsWith(dictName)
+            );
+            tabContainer.removeChild(tabToRemove);
+
+            if (currentDictName === dictName) {
+                const firstTab = tabContainer.querySelector('.tab-item');
+                if (firstTab) {
+                    const newDictName = firstTab.textContent.trim().split(' ')[0];
+                    switchDictionary(newDictName);
+                } else {
+                    currentDictName = null;
+                    renderWordListNav([]);
+                }
+            }
+            saveDictionariesToStorage(); // 保存到 localStorage
+            showNotification('词典已删除');
+        }
+
+        // 渲染单词列表到导航栏
+        function renderWordListNav(filteredWords = dictionaries.get(currentDictName) || new Map()) {
+            const wordListNav = document.getElementById('word-list-nav');
+            wordListNav.innerHTML = '';
+
+            if (!currentDictName) {
+                wordListNav.innerHTML = '<li style="text-align: center;">请先添加词典</li>';
+                return;
+            }
+
+            if (filteredWords.size === 0) {
+                wordListNav.innerHTML = '<li style="text-align: center;">词典为空</li>';
+                return;
+            }
+
+            Array.from(filteredWords.keys()).forEach((word, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = word;
+                if (index === currentWordIndex) {
+                    listItem.classList.add('active');
+                }
+                listItem.onclick = () => showWordDetail(index);
+                wordListNav.appendChild(listItem);
+            });
+        }
+
+        // 显示单词详细释义
+        function showWordDetail(index) {
+            const currentDict = dictionaries.get(currentDictName);
+            const wordsArray = Array.from(currentDict.keys());
+            const selectedWord = wordsArray[index];
+
+            currentWordIndex = index;
+            const wordDetail = document.getElementById('word-detail');
+
+            if (selectedWord && currentDict.has(selectedWord)) {
+                const definition = currentDict.get(selectedWord);
+                wordDetail.innerHTML = parseDefinition(selectedWord, definition);
+            } else {
+                wordDetail.innerHTML = `
+                    <h3>请选择一个单词</h3>
+                    <p>这里会显示单词的详细释义。</p>
+                `;
+            }
+            renderWordListNav();
+        }
+
+        // 解析 definition 并生成 HTML
+        function parseDefinition(word, definition) {
+            let html = `<h3>${word}</h3>`;
+            
+            // 分割 definition 的每一行
+            const lines = definition.split('\n').filter(line => line.trim() !== '');
+
+            // 正则表达式匹配音标、词性、中文释义和例句
+            const phoneticRegex = /^\/[^\/]+\/\s*\(.*?\)/g;
+            const partOfSpeechRegex = /^\[\w+\]/;
+            const chineseDefinitionRegex = /-\s*中文释义：(.+)/;
+            const exampleRegex = /-\s*(.+)\s*\（(.+)）/;
+
+            lines.forEach(line => {
+                // 匹配音标
+                if (phoneticRegex.test(line)) {
+                    html += `<div class="phonetic">${line}</div>`;
+                }
+                // 匹配词性
+                else if (partOfSpeechRegex.test(line)) {
+                    html += `<div class="part-of-speech">${line}</div>`;
+                }
+                // 匹配中文释义
+                else if (chineseDefinitionRegex.test(line)) {
+                    const match = line.match(chineseDefinitionRegex);
+                    html += `<div class="chinese-definition">中文释义：${match[1]}</div>`;
+                }
+                // 匹配例句
+                else if (exampleRegex.test(line)) {
+                    const match = line.match(exampleRegex);
+                    html += `<div class="example">例句：${match[1]} （${match[2]}）</div>`;
+                }
+                // 其他内容作为普通定义
+                else {
+                    html += `<div class="definition">${line}</div>`;
+                }
+            });
+
+            return html;
+        }
+
+        // 添加单词
+        function addWord() {
+            if (!currentDictName) {
+                showNotification('请先添加或选择一个词典');
+                return;
+            }
+
+            const wordInput = document.getElementById('word-input');
+            const definitionInput = document.getElementById('definition-input');
+
+            const word = wordInput.value.trim();
+            const definition = definitionInput.value.trim();
+
+            if (word && definition) {
+                const currentDict = dictionaries.get(currentDictName);
+                currentDict.set(word, definition); // 使用 Map 的 set 方法
+                saveDictionariesToStorage(); // 保存到 localStorage
+                renderWordListNav();
+                wordInput.value = '';
+                definitionInput.value = '';
+                showNotification('单词添加成功');
+            } else {
+                showNotification('请输入单词和定义');
+            }
+        }
+
+        // 导出词典文件
+        function exportDictionary() {
+            if (!currentDictName) {
+                showNotification('请先添加或选择一个词典');
+                return;
+            }
+
+            const currentDict = dictionaries.get(currentDictName);
+            if (!currentDict || currentDict.size === 0) {
+                showNotification('当前词典为空，无法导出');
+                return;
+            }
+
+            // 将词库数据转换为 JSON 字符串
+            const jsonData = JSON.stringify(Array.from(currentDict.entries()).map(([word, definition]) => ({ word, definition })), null, 2);
+
+            // 创建下载链接
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentDictName}.json`; // 文件名
+            document.body.appendChild(a);
+            a.click();
+
+            // 清理资源
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showNotification('词典导出成功');
+        }
+
+        // 搜索框过滤单词列表
+        function filterWordList() {
+            if (!currentDictName) return;
+
+            const searchInput = document.getElementById('nav-search-input');
+            const query = searchInput.value.trim().toLowerCase();
+
+            const currentDict = dictionaries.get(currentDictName);
+            if (query) {
+                const filteredWords = new Map(
+                    Array.from(currentDict.entries()).filter(([word]) =>
+                        word.toLowerCase().includes(query)
+                    )
+                );
+                renderWordListNav(filteredWords);
+            } else {
+                renderWordListNav();
+            }
+        }
+
+        // 页面加载时恢复词典数据
+        loadDictionariesFromStorage();
+    </script>
+</body>
+</html>
